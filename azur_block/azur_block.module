@@ -56,7 +56,6 @@ function azur_carousel_data_generation(){
  }
 
 function theme_azur_carousel_block($variables){
-	dpm($variables['data']);
 	$output = '<div id="azur-carousel" class="carousel slide">
 			<div class="carousel-inner">';
     foreach($variables['data'] as $key => $value){

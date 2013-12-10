@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Azur features feature.
+ */
+
+include_once 'azur_features.features.inc';

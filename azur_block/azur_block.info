@@ -1,0 +1,4 @@
+name = azur_block
+description = "All the blocks required fot the azur infotech site"
+package = Azur
+core = 7.x

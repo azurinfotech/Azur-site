@@ -1,4 +1,4 @@
-name = azur_block
+name = AzurBlocks
 description = "All the blocks required fot the azur infotech site"
 package = Azur
 core = 7.x

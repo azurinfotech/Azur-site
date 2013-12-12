@@ -9,6 +9,11 @@
     'info' => t('The main page carousel'),
     'cache' => DRUPAL_NO_CACHE
   );
+  $block['azur_footer'] = array(
+    'info' => t('The Footer Block'),
+    'cache' => DRUPAL_NO_CACHE
+  );
+  
   return $block;
  }
 
@@ -21,8 +26,15 @@ function azur_block_block_view($delta = ''){
 		case 'azur_carousel' :
 			$carousel = azur_carousel_data_generation();
 			$block = array(
-			'subject' => t('This is the carousel image'),
+			'subject' => t('Azur Carousel'),
 			'content' => theme('azur_carousel_block',array('data' => $carousel)),
+			);
+			break;
+			
+		case 'azur_footer' :
+			$block = array(
+			'subject' => t('Azur footer'),
+			'content' => azur_footer_block(),
 			);
 	}
 	return $block;
@@ -86,5 +98,56 @@ else{
 			<a class="left carousel-control" href="#azur-carousel" data-slide="prev" id="prev_cntrl"> </a>
 			<a class="right carousel-control" href="#azur-carousel" data-slide="next" id="next_cntrl"> </a>
 		</div>';
+		return $output;
+}
+function azur_footer_block(){
+	$output = '
+
+				<div class="footer-inner">
+
+					<div class="clear"></div>
+					<div class="footer-bottom">
+						<div class="footer-bottom-right">
+							<div class = "stay-connected">
+								<ul class="parent">
+									<li>
+										<div class="button">
+											<a href="http://www.facebook.com/" title="Follow us on Facebook" target="_new"> <span class="SC_facebook_link notitle imglink"> </span> <span> <strong> </strong> </span> </a>
+										</div>
+									</li>
+
+									<li>
+										<div class="button">
+											<a href="http://www.linkedin.com/company/azur-infotech" title="Follow us on LinkedIn" target="_new"> <span class="SC_linkedin_link notitle imglink"> </span> <span> <strong> </strong> </span> </a>
+										</div>
+									</li>
+
+									<li>
+										<div class="button">
+											<a href="http://twitter.com/" title="Follow us on Twitter" target="_new"> <span class="SC_twitter_link notitle imglink"> </span> <span> <strong> </strong> </span> </a>
+										</div>
+									</li>
+								</ul>
+							</div>
+							<div class="copyright">
+								&copy;2013. Azur infotech. All Rights Reserved.
+							</div>
+
+						</div>
+
+						<div class="footer-bottom-left">
+
+							<!--
+							<span class ="foot-bottom">
+							-->
+							<a href="approach.html" id="a49"> Azur infotech Approach </a>
+
+							&nbsp; | &nbsp;
+							<a href="privacy.html" id="a2"> Privacy Policy </a>
+
+						</div>
+
+					</div>
+				</div>';
 		return $output;
 }

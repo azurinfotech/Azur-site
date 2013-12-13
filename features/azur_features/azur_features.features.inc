@@ -33,6 +33,14 @@ function azur_features_node_info() {
       'title_label' => t('Title'),
       'help' => '',
     ),
+    'case_study' => array(
+      'name' => t('Case study'),
+      'base' => 'node_content',
+      'description' => t('Case study of Azur.'),
+      'has_title' => '1',
+      'title_label' => t('Title'),
+      'help' => '',
+    ),
     'news' => array(
       'name' => t('News'),
       'base' => 'node_content',

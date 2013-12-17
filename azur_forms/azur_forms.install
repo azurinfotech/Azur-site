@@ -1,0 +1,34 @@
+<?php
+
+/**
+ * Implements hook_schema
+ */
+function azur_forms_schema() {
+  $schema = array();
+  _azur_forms_carousel_fields($schema);
+  return $schema;
+}
+
+function _azur_forms_carousel_fields(&$schema) {
+  $schema['azur_carousel_fields'] = array(
+    'description' => 'Table storing all the fields that are required for the carousel.',
+    'fields' => array(
+      'car_id' => array(
+        'description' => 'the primary identifier of the table',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'nodeid' => array(
+        'description' => 'The nid of the node for this carousel.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'car_data' => array(
+        'description' => 'A serialized array storing all the data for the carousel',
+        'type' => 'text',
+        'size' => 'medium',
+      ),
+    ),
+    'primary key' => array('car_id'),
+  );
+}

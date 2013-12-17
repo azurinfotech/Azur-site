@@ -3,108 +3,143 @@
 /**
  * Implements hook_block_info
  */
- function azur_block_block_info(){
- 	 $block = array();
+function azur_block_block_info() {
+  $block = array();
   $block['azur_carousel'] = array(
-    'info' => t('The main page carousel'),
+    'info' => t('Carousel block'),
     'cache' => DRUPAL_NO_CACHE
   );
   $block['azur_footer'] = array(
-    'info' => t('The Footer Block'),
+    'info' => t('Footer block'),
     'cache' => DRUPAL_NO_CACHE
   );
-  
+
   return $block;
- }
+}
 
 /**
  * Implements hook_block_view
  */
-function azur_block_block_view($delta = ''){
-	$block = array();
-	switch($delta){
-		case 'azur_carousel' :
-			$carousel = azur_carousel_data_generation();
-			$block = array(
-			'subject' => t('Azur Carousel'),
-			'content' => theme('azur_carousel_block',array('data' => $carousel)),
-			);
-			break;
-			
-		case 'azur_footer' :
-			$block = array(
-			'subject' => t('Azur footer'),
-			'content' => azur_footer_block(),
-			);
-	}
-	return $block;
+function azur_block_block_view($delta = '') {
+  $block = array();
+  switch($delta) {
+    case 'azur_carousel' :
+      $carousel = azur_carousel_data_generation();
+      $block = array(
+        'subject' => t('Azur Carousel'),
+        'content' => theme('azur_carousel_block', array('data' => $carousel)),
+      );
+      break;
+
+    case 'azur_footer' :
+      $block = array(
+        'subject' => t('Azur footer'),
+        'content' => azur_footer_block(),
+      );
+  }
+  return $block;
 }
 
-function azur_carousel_data_generation(){
-	$carousel = array();
-	$query = db_select('node','n');
-	$query -> innerJoin('field_data_field_carousel_image','img','n.nid = img.entity_id');
-	$query -> innerJoin('file_managed','file','img.field_carousel_image_fid = file.fid');
-	$query -> innerJoin('field_data_field_carousel_data','data','n.nid = data.entity_id');
-	$query -> fields('n',array('title'));
-	$query -> fields('file',array('uri'));
-	$query -> fields('data',array('field_carousel_data_value'));
-	$query -> condition('n.type','carousel','LIKE');
-	$query -> condition('n.status',1,'=');
-	$result = $query -> execute();
-	foreach($result as $row){
-		$carousel[] = array('title' => $row->title,'img' => file_create_url($row->uri),'data' => $row->field_carousel_data_value);
-	}
-	return $carousel;
+function azur_carousel_data_generation() {
+  $carousel = array();
+  $query = db_select('node', 'n');
+  $query -> innerJoin('field_data_field_carousel_image', 'img', 'n.nid = img.entity_id');
+  $query -> innerJoin('file_managed', 'file', 'img.field_carousel_image_fid = file.fid');
+  $query -> leftJoin('field_data_field_carousel_data', 'data', 'n.nid = data.entity_id');
+  $query -> innerJoin('azur_carousel_fields', 'effects', 'effects.nodeid = n.nid');
+  $query -> fields('n', array('title'));
+  $query -> fields('file', array('uri'));
+  $query -> fields('data', array('field_carousel_data_value'));
+  $query -> fields('effects', array('car_data'));
+  $query -> condition('n.type', 'carousel', 'LIKE');
+  $query -> condition('n.status', 1, '=');
+  $result = $query -> execute();
+  foreach ($result as $row) {
+    $effects = unserialize($row -> car_data);
+    $carousel[] = array(
+      'title' => $row -> title,
+      'img' => file_create_url($row -> uri),
+      'data' => $row -> field_carousel_data_value,
+      'type' => isset($effects['type']) ? $effects['type'] : '',
+      'effects_title' => isset($effects['title']) ? $effects['title'] : '',
+      'path' => isset($effects['path']) ? $effects['path'] : '',
+      'button' => isset($effects['button']) ? $effects['button'] : '',
+      'video_data' => isset($effects['video_data']) ? $effects['video_data'] : '',
+      'case_data' => isset($effects['case_data']) ? $effects['case_data'] : '',
+      'news_data' => isset($effects['news_data']) ? $effects['news_data'] : '',
+      'more' => isset($effects['more']) ? $effects['more'] : ''
+    );
+  }
+  return $carousel;
 }
 
 /**
  * Implements hook_theme
  */
- function azur_block_theme(){
- 	return array(
-	'azur_carousel_block' => array('variables' => array('data' => NULL)),
-	);
- }
-
-function theme_azur_carousel_block($variables){
-	$output = '<div id="azur-carousel" class="carousel slide">
-			<div class="carousel-inner">';
-    foreach($variables['data'] as $key => $value){
-    	if($key == 0){
-    		$output .= '<div class="item active">
-    		<img src=" '. $value['img']. '"/>
-					<div class="container right-top">
-						<div class="carousel-caption">
-						<h1>'.$value['title'].'</h1>
-						<p class="lead">'.$value['data'].'</p>
-						</div>
-						</div>
-						</div>';
-    	}
-else{
-	$output .= '<div class="item">
-	<img src=" '. $value['img']. '"/>
-					<div class="container right-top">
-						<div class="carousel-caption">
-						<h1>'.$value['title'].'</h1>
-						<p class="lead">'.$value['data'].'</p>
-						</div>
-						</div>
-						</div>';
+function azur_block_theme() {
+  return array('azur_carousel_block' => array('variables' => array('data' => NULL)), );
 }
+
+function theme_azur_carousel_block($variables) {
+	dpm($variables);
+  $effect = '';
+  $output = '<div id="azur-carousel" class="carousel slide">
+			<div class="carousel-inner">';
+  foreach ($variables['data'] as $key => $value) {
+    if ($value['type'] == 1) {
+      if ($value['button'] == 1) {
+        $effect = '<a href="' . $value['path'] . '" class="btn btn-primary">' . $value['effects_title'] . '</a>';
+      }
+      else {
+        $effect = '<a href="' . $value['path'] . '">' . $value['effects_title'] . '</a>';
+      }
     }
-	$output .= '</div>
+    else if ($value['type'] == 2) {
+    	dpm($value);
+      $value['title'] = $value['effects_title'];
+      $value['data'] = $value['news_data'];
+			$effect = $value['more'];
+    }
+    else if ($value['type'] == 3) {
+      $effect = '<div class="video_effect">' . $value['video_data'] . '</div>';
+    }
+    else if ($value['type'] == 4) {
+      $value['title'] = $value['effects_title'];
+      $value['data'] = $value['case_data'];
+			$effect = $value['more'];
+    }
+    if ($key == 0) {
+      $output .= '<div class="item active">
+    		<img src=" ' . $value['img'] . '"/>
+					<div class="container right-top">
+						<div class="carousel-caption">
+						<h1>' . $value['title'] . '</h1>
+						<p class="lead">' . $value['data'] . '</p>' . $effect . ' </div>
+			</div>
+			</div>';
+    }
+    else {
+      $output .= '<div class="item">
+	<img src=" ' . $value['img'] . '"/>
+					<div class="container right-top">
+						<div class="carousel-caption">
+						<h1>' . $value['title'] . '</h1>
+						<p class="lead">' . $value['data'] . '</p>' . $effect . ' </div>
+			</div>
+			</div>';
+    }
+  }
+  $output .= '
+		  </div>
 			<a class="left carousel-control" href="#azur-carousel" data-slide="prev" id="prev_cntrl"> </a>
 			<a class="right carousel-control" href="#azur-carousel" data-slide="next" id="next_cntrl"> </a>
 		</div>';
-		return $output;
+  return $output;
 }
-function azur_footer_block(){
-	$output = '
 
+function azur_footer_block() {
+  $output = '
 				<div class="footer-inner">
-
 					<div class="clear"></div>
 					<div class="footer-bottom">
 						<div class="footer-bottom-right">
@@ -115,13 +150,11 @@ function azur_footer_block(){
 											<a href="http://www.facebook.com/" title="Follow us on Facebook" target="_new"> <span class="SC_facebook_link notitle imglink"> </span> <span> <strong> </strong> </span> </a>
 										</div>
 									</li>
-
 									<li>
 										<div class="button">
 											<a href="http://www.linkedin.com/company/azur-infotech" title="Follow us on LinkedIn" target="_new"> <span class="SC_linkedin_link notitle imglink"> </span> <span> <strong> </strong> </span> </a>
 										</div>
 									</li>
-
 									<li>
 										<div class="button">
 											<a href="http://twitter.com/" title="Follow us on Twitter" target="_new"> <span class="SC_twitter_link notitle imglink"> </span> <span> <strong> </strong> </span> </a>
@@ -132,22 +165,16 @@ function azur_footer_block(){
 							<div class="copyright">
 								&copy;2013. Azur infotech. All Rights Reserved.
 							</div>
-
 						</div>
-
 						<div class="footer-bottom-left">
-
 							<!--
 							<span class ="foot-bottom">
 							-->
 							<a href="approach.html" id="a49"> Azur infotech Approach </a>
-
 							&nbsp; | &nbsp;
 							<a href="privacy.html" id="a2"> Privacy Policy </a>
-
 						</div>
-
 					</div>
 				</div>';
-		return $output;
+  return $output;
 }

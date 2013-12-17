@@ -1,0 +1,4 @@
+name = Azur forms
+description = "All the forms required fot the azur infotech site"
+package = Azur
+core = 7.x

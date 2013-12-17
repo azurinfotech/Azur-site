@@ -1,0 +1,200 @@
+<?php
+
+/**
+ * Implements hook_form_alter
+ */
+function azur_forms_form_alter(&$form, &$form_state, $formid) {
+  if ($formid == 'carousel_node_form') {
+    $default = array();
+    $edit = arg(2);
+    if ($edit == 'edit') {
+      $query = db_select('azur_carousel_fields', 'car') -> fields('car', array('car_data')) -> condition('nodeid', arg(1), '=') -> execute() -> fetchfield();
+      $default = unserialize($query);
+    }
+    $form['link_container'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Add Link'),
+      '#title_display' => 'invisible',
+      '#states' => array('visible' => array(
+          ':input[name="add_video"]' => array('checked' => FALSE),
+          ':input[name="add_news"]' => array('checked' => FALSE),
+          ':input[name="add_case"]' => array('checked' => FALSE)
+        )),
+    );
+    $form['link_container']['add_link'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Add Link'),
+      '#description' => t('Add a link on the carousel.'),
+      '#default_value' => (isset($default['type']) && $default['type'] == 1) ? 1 : 0
+    );
+    $form['link_container']['link_function'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Page to Link'),
+      '#description' => t('Enter the url of the page that you want to link.'),
+      '#states' => array('visible' => array(':input[name="add_link"]' => array('checked' => TRUE))),
+      '#default_value' => (isset($default['path']) && $default['type'] == 1) ? $default['path'] : ''
+    );
+    $form['link_container']['link_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Link title'),
+      '#description' => t('Enter the title you want to give for this link.'),
+      '#states' => array('visible' => array(':input[name="add_link"]' => array('checked' => TRUE))),
+      '#default_value' => (isset($default['title']) && $default['type'] == 1) ? $default['title'] : ''
+    );
+    $form['link_container']['link_button'] = array(
+      '#type' => 'checkbox',
+      '#description' => t('Check this to make this link abutton'),
+      '#title' => t('Make this button'),
+      '#states' => array('visible' => array(':input[name = "add_link"]' => array('checked' => TRUE))),
+    );
+    $form['video_container'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Add Video'),
+      '#title_display' => 'invisible',
+      '#states' => array('visible' => array(
+          ':input[name="add_link"]' => array('checked' => FALSE),
+          ':input[name="add_news"]' => array('checked' => FALSE),
+          ':input[name="add_case"]' => array('checked' => FALSE)
+        )),
+    );
+    $form['video_container']['add_video'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Add Video'),
+      '#description' => t('Add a video on the carousel'),
+      '#default_value' => (isset($default['type']) && $default['type'] == 3) ? 1 : 0
+    );
+    $form['video_container']['video_data'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Video embed code'),
+      '#description' => t('Copy the embed code from youtube and place it here. Also change the width and height to 400X300'),
+      '#states' => array('visible' => array(':input[name="add_video"]' => array('checked' => TRUE))),
+      '#default_value' => (isset($default['video_data']) && $default['type'] == 3) ? $video_data : ''
+    );
+    $form['news_container'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Add news'),
+      '#title_display' => 'invisible',
+      '#states' => array('visible' => array(
+          ':input[name="add_link"]' => array('checked' => FALSE),
+          ':input[name="add_video"]' => array('checked' => FALSE),
+          ':input[name="add_case"]' => array('checked' => FALSE)
+        )),
+    );
+    $form['news_container']['add_news'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Add news'),
+      '#description' => t('Add a news item to the carousel'),
+      '#default_value' => (isset($default['type']) && $default['type'] == 2) ? 1 : 0
+    );
+    $squery = db_select('node', 'n') -> fields('n', array(
+      'nid',
+      'title'
+    )) -> condition('n.type', 'news', 'LIKE') -> execute() -> fetchAllKeyed();
+    $form['news_container']['news_list'] = array(
+      '#type' => 'select',
+      '#title' => t('Select news item'),
+      '#description' => t('Please select the news item that you want to add to the carousel'),
+      '#options' => $squery,
+      '#states' => array('visible' => array(':input[name="add_news"]' => array('checked' => TRUE))),
+      '#default_value' => (isset($default['nid']) && $default['type'] == 2) ? $default['nid'] : 0
+    );
+    $form['case_container'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Add Case study'),
+      '#title_display' => 'invisible',
+      '#states' => array('visible' => array(
+          ':input[name="add_link"]' => array('checked' => FALSE),
+          ':input[name="add_video"]' => array('checked' => FALSE),
+          ':input[name="add_news"]' => array('checked' => FALSE)
+        )),
+    );
+    $form['case_container']['add_case'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Add news'),
+      '#description' => t('Add a news item to the carousel'),
+      '#default_value' => (isset($default['type']) && $default['type'] == 4) ? 1 : 0
+    );
+    $squery = db_select('node', 'n') -> fields('n', array(
+      'nid',
+      'title'
+    )) -> condition('n.type', 'case study', 'LIKE') -> execute() -> fetchAllKeyed();
+    $form['case_container']['case_list'] = array(
+      '#type' => 'select',
+      '#title' => t('Select news item'),
+      '#description' => t('Please select the news item that you want to add to the carousel'),
+      '#options' => $squery,
+      '#states' => array('visible' => array(':input[name="add_news"]' => array('checked' => TRUE))),
+      '#default_value' => (isset($default['nid']) && $default['type'] == 4) ? $default['type'] : 0
+    );
+  }
+}
+
+/**
+ * Implements hook_node_insert
+ */
+function azur_forms_node_insert($node) {
+  if ($node -> type == 'carousel') {
+    if ($node -> add_link == 1) {
+      $car_data = array(
+        'type' => 1,
+        'title' => $node -> link_title,
+        'path' => $node -> link_function,
+        'button' => $node -> link_button
+      );
+      $data = serialize($car_data);
+      $query = db_insert('azur_carousel_fields') -> fields(array(
+        'nodeid' => $node -> nid,
+        'car_data' => $data
+      )) -> execute();
+    }
+    else if ($node -> add_news == 1) {
+      $target_node = node_load($node -> news_list);
+      $car_data = array(
+        'type' => 2,
+        'title' => $target_node -> title,
+        'news_data' => substr($target_node -> body[LANGUAGE_NONE][0]['value'], 0, 120),
+        'more' => l('Read more', 'node/' . $target_node -> nid),
+        'nid' => $node -> news_list
+      );
+      $data = serialize($car_data);
+      $query = db_insert('azur_carousel_fields') -> fields(array(
+        'nodeid' => $node -> nid,
+        'car_data' => $data
+      )) -> execute();
+    }
+    else if ($node -> add_video == 1) {
+      $car_data = array(
+        'type' => 3,
+        'video_data' => $node -> video_data,
+      );
+      $data = serialize($car_data);
+      $query = db_insert('azur_carousel_fields') -> fields(array(
+        'nodeid' => $node -> nid,
+        'car_data' => $data
+      )) -> execute();
+    }
+    else if ($node -> add_case == 1) {
+      $target_node = node_load($node -> case_list);
+      $car_data = array(
+        'type' => 4,
+        'title' => $target_node -> title,
+        'case_data' => substr($target_node -> body[LANGUAGE_NONE][0]['value'], 0, 120),
+        'more' => l('Read more', 'node/' . $target_node -> nid),
+        'nid' => $node -> case_list
+      );
+      $data = serialize($car_data);
+      $query = db_insert('azur_carousel_fields') -> fields(array(
+        'nodeid' => $node -> nid,
+        'car_data' => $data,
+      )) -> execute();
+    }
+  }
+}
+
+/**
+ * Implements hook_node_update
+ */
+function azur_forms_node_update($node) {
+  $delquery = db_delete('azur_carousel_fields') -> condition('nodeid', $node -> nid, '=');
+  azur_forms_node_insert($node);
+}

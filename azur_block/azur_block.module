@@ -46,7 +46,7 @@ function azur_carousel_data_generation() {
   $query -> innerJoin('field_data_field_carousel_image', 'img', 'n.nid = img.entity_id');
   $query -> innerJoin('file_managed', 'file', 'img.field_carousel_image_fid = file.fid');
   $query -> leftJoin('field_data_field_carousel_data', 'data', 'n.nid = data.entity_id');
-  $query -> innerJoin('azur_carousel_fields', 'effects', 'effects.nodeid = n.nid');
+  $query -> leftJoin('azur_carousel_fields', 'effects', 'effects.nodeid = n.nid');
   $query -> fields('n', array('title'));
   $query -> fields('file', array('uri'));
   $query -> fields('data', array('field_carousel_data_value'));
@@ -81,7 +81,6 @@ function azur_block_theme() {
 }
 
 function theme_azur_carousel_block($variables) {
-	dpm($variables);
   $effect = '';
   $output = '<div id="azur-carousel" class="carousel slide">
 			<div class="carousel-inner">';
@@ -95,7 +94,6 @@ function theme_azur_carousel_block($variables) {
       }
     }
     else if ($value['type'] == 2) {
-    	dpm($value);
       $value['title'] = $value['effects_title'];
       $value['data'] = $value['news_data'];
 			$effect = $value['more'];

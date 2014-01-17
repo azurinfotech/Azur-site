@@ -78,7 +78,7 @@ function azur_features_default_page_manager_pages() {
         'width' => 50,
         'width_type' => '%',
         'parent' => 'main-row',
-        'class' => 'span3',
+        'class' => '',
       ),
       'region_right' => array(
         'type' => 'region',
@@ -86,7 +86,7 @@ function azur_features_default_page_manager_pages() {
         'width' => 50,
         'width_type' => '%',
         'parent' => 'main-row',
-        'class' => 'span3',
+        'class' => '',
       ),
     ),
   );
@@ -134,6 +134,39 @@ function azur_features_default_page_manager_pages() {
     $pane->locks = array();
     $display->content['new-1'] = $pane;
     $display->panels['center'][0] = 'new-1';
+    $pane = new stdClass();
+    $pane->pid = 'new-2';
+    $pane->panel = 'region_right';
+    $pane->type = 'views';
+    $pane->subtype = 'case_study';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'override_pager_settings' => 0,
+      'use_pager' => 0,
+      'nodes_per_page' => '1',
+      'pager_id' => '0',
+      'offset' => '0',
+      'more_link' => 0,
+      'feed_icons' => 0,
+      'panel_args' => 0,
+      'link_to_view' => 0,
+      'args' => '',
+      'url' => '',
+      'display' => 'block',
+      'override_title' => 0,
+      'override_title_text' => '',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $display->content['new-2'] = $pane;
+    $display->panels['region_right'][0] = 'new-2';
   $display->hide_title = PANELS_TITLE_FIXED;
   $display->title_pane = '0';
   $handler->conf['display'] = $display;

@@ -24,9 +24,12 @@ regions[page_bottom]    = 'Page bottom'
 ;; Stylesheets
 ;;;;;;;;;;;;;;;;;;;;;
 
-stylesheets[all][] = bootstrap/css/bootstrap.css
-stylesheets[all][] = bootstrap/css/bootstrap-theme.css
+;stylesheets[all][] = bootstrap/css/bootstrap.css
+;stylesheets[all][] = bootstrap/css/bootstrap-theme.css
 stylesheets[all][] = css/style.css
+stylesheets[all][] = css/metro-bootstrap.css
+;stylesheets[all][] = css/bootmetro.css
+;stylesheets[all][] = css/bootmetro-responsive.css
 
 
 ; For information on choosing the desired method, please read the Drupal
@@ -43,6 +46,7 @@ stylesheets[all][] = css/style.css
 ; 
 scripts[] = 'bootstrap/js/bootstrap.js'
 scripts[] = 'bootstrap/js/azur_custom.js'
+scripts[] = 'bootstrap/js/bootmetro-panorama.js'
 ;scripts[] = 'bootstrap/js/alert.js'
  ;scripts[] = 'bootstrap/js/button.js'
  ;scripts[] = 'bootstrap/js/carousel.js'

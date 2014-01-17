@@ -4,7 +4,10 @@
  * Implements hook_form_alter
  */
 function azur_forms_form_alter(&$form, &$form_state, $formid) {
-  if ($formid == 'carousel_node_form') {
+	if($formid == 'taxonomy_form_term'){
+		
+	}
+	else if ($formid == 'carousel_node_form') {
     $default = array();
     $edit = arg(2);
     if ($edit == 'edit') {

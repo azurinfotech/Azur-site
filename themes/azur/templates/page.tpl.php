@@ -74,7 +74,7 @@
  */
 ?>
 <div class="user-links">
-		<?php print render($page['user_links']);?>
+		<?php if(!empty($page['user_links'])){print render($page['user_links']);}?>
 </div>
 <header id="navbar" role="banner" class="<?php print $navbar_classes; ?>">
   <div class="container">

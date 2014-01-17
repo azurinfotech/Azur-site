@@ -1,0 +1,4 @@
+name = Azur pages
+description = "Module contains all the pages for the azur site."
+package = Azur
+core = 7.x

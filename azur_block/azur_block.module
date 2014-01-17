@@ -54,21 +54,23 @@ function azur_carousel_data_generation() {
   $query -> condition('n.type', 'carousel', 'LIKE');
   $query -> condition('n.status', 1, '=');
   $result = $query -> execute();
-  foreach ($result as $row) {
-    $effects = unserialize($row -> car_data);
-    $carousel[] = array(
-      'title' => $row -> title,
-      'img' => file_create_url($row -> uri),
-      'data' => $row -> field_carousel_data_value,
-      'type' => isset($effects['type']) ? $effects['type'] : '',
-      'effects_title' => isset($effects['title']) ? $effects['title'] : '',
-      'path' => isset($effects['path']) ? $effects['path'] : '',
-      'button' => isset($effects['button']) ? $effects['button'] : '',
-      'video_data' => isset($effects['video_data']) ? $effects['video_data'] : '',
-      'case_data' => isset($effects['case_data']) ? $effects['case_data'] : '',
-      'news_data' => isset($effects['news_data']) ? $effects['news_data'] : '',
-      'more' => isset($effects['more']) ? $effects['more'] : ''
-    );
+  if (!empty($result)) {
+    foreach ($result as $row) {
+      $effects = unserialize($row -> car_data);
+      $carousel[] = array(
+        'title' => $row -> title,
+        'img' => file_create_url($row -> uri),
+        'data' => $row -> field_carousel_data_value,
+        'type' => isset($effects['type']) ? $effects['type'] : '',
+        'effects_title' => isset($effects['title']) ? $effects['title'] : '',
+        'path' => isset($effects['path']) ? $effects['path'] : '',
+        'button' => isset($effects['button']) ? $effects['button'] : '',
+        'video_data' => isset($effects['video_data']) ? $effects['video_data'] : '',
+        'case_data' => isset($effects['case_data']) ? $effects['case_data'] : '',
+        'news_data' => isset($effects['news_data']) ? $effects['news_data'] : '',
+        'more' => isset($effects['more']) ? $effects['more'] : ''
+      );
+    }
   }
   return $carousel;
 }
@@ -81,35 +83,34 @@ function azur_block_theme() {
 }
 
 function theme_azur_carousel_block($variables) {
-	dpm($variables);
   $effect = '';
   $output = '<div id="azur-carousel" class="carousel slide">
 			<div class="carousel-inner">';
-  foreach ($variables['data'] as $key => $value) {
-    if ($value['type'] == 1) {
-      if ($value['button'] == 1) {
-        $effect = '<a href="' . $value['path'] . '" class="btn btn-primary">' . $value['effects_title'] . '</a>';
+  if (!empty($variables['data'])) {
+    foreach ($variables['data'] as $key => $value) {
+      if ($value['type'] == 1) {
+        if ($value['button'] == 1) {
+          $effect = '<a href="' . $value['path'] . '" class="btn btn-primary">' . $value['effects_title'] . '</a>';
+        }
+        else {
+          $effect = '<a href="' . $value['path'] . '">' . $value['effects_title'] . '</a>';
+        }
       }
-      else {
-        $effect = '<a href="' . $value['path'] . '">' . $value['effects_title'] . '</a>';
+      else if ($value['type'] == 2) {
+        $value['title'] = $value['effects_title'];
+        $value['data'] = $value['news_data'];
+        $effect = $value['more'];
       }
-    }
-    else if ($value['type'] == 2) {
-    	dpm($value);
-      $value['title'] = $value['effects_title'];
-      $value['data'] = $value['news_data'];
-			$effect = $value['more'];
-    }
-    else if ($value['type'] == 3) {
-      $effect = '<div class="video_effect">' . $value['video_data'] . '</div>';
-    }
-    else if ($value['type'] == 4) {
-      $value['title'] = $value['effects_title'];
-      $value['data'] = $value['case_data'];
-			$effect = $value['more'];
-    }
-    if ($key == 0) {
-      $output .= '<div class="item active">
+      else if ($value['type'] == 3) {
+        $effect = '<div class="video_effect">' . $value['video_data'] . '</div>';
+      }
+      else if ($value['type'] == 4) {
+        $value['title'] = $value['effects_title'];
+        $value['data'] = $value['case_data'];
+        $effect = $value['more'];
+      }
+      if ($key == 0) {
+        $output .= '<div class="item active">
     		<img src=" ' . $value['img'] . '"/>
 					<div class="container right-top">
 						<div class="carousel-caption">
@@ -117,9 +118,9 @@ function theme_azur_carousel_block($variables) {
 						<p class="lead">' . $value['data'] . '</p>' . $effect . ' </div>
 			</div>
 			</div>';
-    }
-    else {
-      $output .= '<div class="item">
+      }
+      else {
+        $output .= '<div class="item">
 	<img src=" ' . $value['img'] . '"/>
 					<div class="container right-top">
 						<div class="carousel-caption">
@@ -127,6 +128,7 @@ function theme_azur_carousel_block($variables) {
 						<p class="lead">' . $value['data'] . '</p>' . $effect . ' </div>
 			</div>
 			</div>';
+      }
     }
   }
   $output .= '

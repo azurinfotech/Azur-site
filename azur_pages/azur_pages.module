@@ -1,0 +1,330 @@
+<?php
+/**
+ * Implements hook_permission
+ */
+function azur_pages_permission() {
+  $item = array('access services page' => array('title' => t('Access the Services page and all the Sub-pages')), );
+  return $item;
+}
+
+/**
+ * Implementes hook_menu
+ */
+function azur_pages_menu() {
+  $items['azur/services'] = array(
+    'title' => t('Services'),
+    'description' => t('The services page'),
+    'page callback' => 'azur_generate_taxo_pages',
+    'access callback' => TRUE,
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['azur/industries'] = array(
+    'title' => t('Industries'),
+    'description' => t('The Industries page'),
+    'page callback' => 'azur_generate_taxo_pages',
+    'access callback' => TRUE,
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['azur/workroom'] = array(
+    'title' => t('Workroom'),
+    'description' => t('The work-room page that contains all the case studies'),
+    'page callback' => 'azur_workroom_generate',
+    'access callback' => TRUE,
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['services/%'] = array(
+    'title' => t('Services'),
+    'description' => t('Internal Services page'),
+    'page callback' => 'azur_services_generate',
+    'page arguments' => array(1),
+    'access arguments' => array('access services page'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['services_table/%'] = array(
+    'title' => t('Services'),
+    'description' => t('The page that contains the tabular format data for the Services'),
+    'page callback' => 'azur_services_table_generate',
+    'page arguments' => array(1),
+    'access arguments' => array('access services page'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['industries_table'] = array(
+    'title' => t('Industries'),
+    'description' => t('The page that contains the tabular format data for the Industries'),
+    'page callback' => 'azur_industries_table_generate',
+    'access arguments' => array('access services page'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+function azur_industries_table_generate() {
+  $vocab = taxonomy_vocabulary_get_names();
+  $tree = taxonomy_get_tree($vocab['industries'] -> vid, 0, NULL, TRUE);
+  $thead = array(
+    'Industry',
+    'Perspective',
+    'The Azur touch'
+  );
+  $trow = array();
+  foreach ($tree as $key => $value) {
+    if ($value -> parents[0] != 0) {
+      $trow[] = array(
+        $value -> name,
+        !empty($value -> field_perspectives[LANGUAGE_NONE][0]['safe_value']) ?$value -> field_perspectives[LANGUAGE_NONE][0]['safe_value']: '',
+        !empty($value -> field_azur_touch[LANGUAGE_NONE][0]['safe_value']) ? $value -> field_azur_touch[LANGUAGE_NONE][0]['safe_value'] : ''
+      );
+    }
+  }
+  return theme('table', array(
+    'header' => $thead,
+    'rows' => $trow
+  ));
+}
+
+function azur_services_table_generate($tid) {
+  $theader = array();
+  $trow = array();
+  $children = taxonomy_get_children($tid);
+  if (!empty($children)) {
+    $theader = array(
+      'Service',
+      'Perspective',
+      'The Azur Touch'
+    );
+    foreach ($children as $key => $value) {
+      $trow[] = array(
+        $value -> name,
+        $value -> field_perspectives[LANGUAGE_NONE][0]['safe_value'],
+        $value -> field_azur_touch[LANGUAGE_NONE][0]['safe_value']
+      );
+    }
+  }
+  return theme('table', array(
+    'header' => $theader,
+    'rows' => $trow
+  ));
+}
+
+function azur_services_generate($service) {
+  drupal_add_js(drupal_get_path('module', 'azur_pages') . '/taxo_inside.js');
+  $description = '';
+  $child_services = taxonomy_get_children($service);
+  $output = '<div class="service-icon-menu">';
+  $tids = array();
+  if (!empty($child_services)) {
+    foreach ($child_services as $key => $value) {
+      $tids[] = $key;
+      $output .= '<div class="icon-option" id="tid' . $key . '">' . $value -> name . '</div>';
+      $description .= '<div class="taxo-description" id="taxo' . $key . '"><p>' . nl2br($value -> description) . '</p></div>';
+    }
+    $output .= '</div>';
+    $output .= $description;
+    $output .= '<div class="help-taxo">' . l('Let Us Help', '/services_table/' . $service);
+    return $output;
+  }
+}
+
+function azur_generate_taxo_pages() {
+  $taxo_name = arg(1);
+  $vid = 0;
+  $vocab = taxonomy_vocabulary_get_names();
+  if (!empty($vocab)) {
+    foreach ($vocab as $key => $value) {
+      if ($value -> machine_name == $taxo_name) {
+        $vid = $value -> vid;
+      }
+    }
+  }
+  $tree = taxonomy_get_tree($vid);
+  if ($taxo_name == 'services') {
+    return theme('azur_taxo_pages', array(
+      'data' => $tree,
+      'tile' => 'wide',
+      'flip' => TRUE
+    ));
+  }
+  else {
+    return theme('azur_taxo_pages', array(
+      'data' => $tree,
+      'tile' => 'square',
+      'flip' => FALSE
+    ));
+  }
+}
+
+function azur_workroom_generate() {
+  $filter = array();
+  $case_studies = array();
+  $squery = db_select('node', 'n');
+  $squery -> innerJoin('field_data_body', 'body', 'n.nid = body.entity_id');
+  $squery -> leftJoin('field_data_field_images', 'img', 'img.entity_id = n.nid');
+  $squery -> leftJoin('file_managed', 'fimg', 'fimg.fid = img.field_images_fid');
+  $squery -> leftJoin('field_data_field_file_upload', 'file', 'file.entity_id = n.nid');
+  $squery -> leftJoin('file_managed', 'fup', 'fup.fid = file.field_file_upload_fid');
+  $squery -> leftJoin('field_data_field_industry', 'indus', 'indus.entity_id = n.nid');
+  $squery -> leftJoin('field_data_field_services', 'services', 'services.entity_id = n.nid');
+  $squery -> leftJoin('field_data_field_challenges', 'challenge', 'challenge.entity_id = n.nid');
+  $squery -> leftJoin('field_data_field_technologies', 'tech', 'tech.entity_id = n.nid');
+  $squery -> fields('n', array(
+    'title',
+    'created',
+    'nid'
+  ));
+  $squery -> addField('fimg', 'uri', 'image');
+  $squery -> addField('fup', 'uri', 'file_up');
+  $squery -> addField('body', 'body_value', 'case_body');
+  $squery -> fields('indus', array('field_industry_tid'));
+  $squery -> fields('services', array('field_services_tid'));
+  $squery -> fields('challenge', array('field_challenges_tid'));
+  $squery -> fields('tech', array('field_technologies_tid'));
+  $squery -> condition('n.type', 'case_study', 'LIKE');
+  $squery -> condition('n.status', 1, '=');
+  $squery -> orderBy('created', 'DESC');
+  $result = $squery -> execute();
+  if (!empty($result)) {
+    foreach ($result as $value) {
+      $case_studies[] = $value;
+    }
+  }
+  $vocabs = taxonomy_vocabulary_get_names();
+  $industries = taxonomy_get_tree($vocabs['my_industry'] -> vid);
+  $services = taxonomy_get_tree($vocabs['services_of_interest'] -> vid);
+  $challenges = taxonomy_get_tree($vocabs['my_challenge'] -> vid);
+  $technology = taxonomy_get_tree($vocabs['technology'] -> vid);
+  return theme('azur_workroom_page', array(
+    'case' => $case_studies,
+    'industries' => $industries,
+    'services' => $services,
+    'challenges' => $challenges,
+    'technology' => $technology
+  ));
+}
+
+/**
+ * Implements hook_theme
+ */
+function azur_pages_theme() {
+  return array(
+    'azur_taxo_pages' => array('variables' => array(
+        'data' => NULL,
+        'tile' => NULL,
+        'flip' => NULL
+      )),
+    'azur_workroom_page' => array('variables' => array(
+        'case' => NULL,
+        'industries' => NULL,
+        'services' => NULL,
+        'challenges' => NULL,
+        'technology' => NULL
+      ))
+  );
+}
+
+/**
+ *hook_preprocess_page
+ */
+function azur_pages_preprocess_page(&$vars) {
+  $path = $_GET['q'];
+  $path_array = explode('/', $path);
+  if ($path_array[0] == 'services' || $path_array[0] == 'services_table') {
+    $term = taxonomy_term_load($path_array[1]);
+    drupal_set_title($term -> name);
+  }
+}
+
+function theme_azur_taxo_pages($variables) {
+  drupal_add_js(drupal_get_path('module', 'azur_pages') . '/tiles_style.js');
+  $out_array = array();
+  $par_array = array();
+  if (!empty($variables['data'])) {
+    foreach ($variables['data'] as $key => $value) {
+      if ($value -> depth == 0) {
+        $out_array[$value -> tid] = array('data' => '<div class="panorama-section tile-span-2" ><h2>' . $value -> name . '</h2>', );
+      }
+      if ($value -> depth == 1) {
+        if ($variables['flip']) {
+          $out_array[$value -> parents[0]]['child'][$value -> tid] = '<div class = "tile ' . $variables['tile'] . ' imagetext bg-color-azur flip grp' . $value -> tid . '"><div class="card"><div class="face front"><h4>' . $value -> name . '</h4></div><div class="face back">';
+          $par_array[$value -> tid] = $value -> parents[0];
+        }
+        else {
+          $out_array[$value -> parents[0]]['child'][$value -> tid] = '<a href="../industries_table" class = "tile ' . $variables['tile'] . ' imagetext bg-color-azur  grp' . $value -> tid . '"><div class="card"><h4>' . $value -> name . '</h4>';
+          $par_array[$value -> tid] = $value -> parents[0];
+        }
+      }
+      if ($value -> depth == 2) {
+        $par_tid = $par_array[$value -> parents[0]];
+        $out_array[$par_tid]['child'][$value -> parents[0]] .= '<li>' . l($value -> name, 'services/' . $value -> parents[0] . '/', array('fragment' => $value -> tid)) . '</li>';
+      }
+    }
+  }
+  $output = '<div class ="metro metro-responsive-tiles panorama" "><div class="panorama-sections" style = "width:2200px;">';
+  if (!empty($out_array)) {
+    foreach ($out_array as $key => $val) {
+      $output .= $val['data'];
+      foreach ($val['child'] as $child) {
+        if ($variables['flip']) {
+          $output .= $child . '</div></div></div>';
+        }
+        else {
+          $output .= $child . '</div></a>';
+        }
+      }
+      $output .= '</div>';
+    }
+  }
+  $output .= '</div><a class="metro-arrow-left" style="float:left;"></a><a class="metro-arrow-right" style="float:right;"></a></div>';
+  return $output;
+}
+
+function theme_azur_workroom_page($variables) {
+  drupal_add_js(drupal_get_path('module', 'azur_pages') . '/tile_filter.js');
+  $filter_out = array();
+  $case_out = array();
+  $indus_out = '<a class ="tile square image filter bg-color-greenDark industries" href="#modalIndus"><h3> My Industry</h3></a>';
+  $indus_side = '<div class="side-panel" id="modalIndus"><div class="side-header"><h4>My Industry</h4></div>';
+  foreach ($variables['industries'] as $key => $value) {
+    $indus_side .= '<div class="filter"><input type="checkbox" class="' . $value -> tid . '"/> ' . $value -> name . '</div>';
+  }
+  $indus_side .= '<div class="side-footer"><a class="metro-arrow-right"></a></div></div>';
+  $services_out = '<a class ="tile square image filter bg-color-greenDark services" href="#modalServices"><h3> Services of Interest</h3></a>';
+  $services_side = '<div class="side-panel" id="modalServices"><div class="side-header"><h4>Services of Interest</h4></div>';
+  foreach ($variables['services'] as $key => $value) {
+    $services_side .= '<div class="filter"><input type="checkbox" class="' . $value -> tid . '"/> ' . $value -> name . '</div>';
+  }
+  $services_side .= '<div class="side-footer"><a class="metro-arrow-right"></a></div></div>';
+  $challenge_out = '<a class ="tile square image filter bg-color-greenDark challenges" href="#modalChallenge"><h3> My Challenges</h3></a>';
+  $challenge_side = '<div class="side-panel" id="modalChallenge"><div class="side-header"><h4>My Challenges</h4></div>';
+  foreach ($variables['challenges'] as $key => $value) {
+    $challenge_side .= '<div class="filter"><input type="checkbox" class="' . $value -> tid . '"/> ' . $value -> name . '</div>';
+  }
+  $challenge_side .= '<div class="side-footer"><a class="metro-arrow-right"></a></div></div>';
+  $technology_out = '<a class ="tile square image filter bg-color-greenDark technology" href="#modalTechnology"><h3>Technology</h3></a>';
+  $technology_side = '<div class="side-panel" id="modalTechnology"><div class="side-header"><h4>Technology</h4></div>';
+  foreach ($variables['technology'] as $key => $value) {
+    $technology_side .= '<div class="filter"><input type="checkbox" class="' . $value -> tid . '"/> ' . $value -> name . '</div>';
+  }
+  $technology_side .= '<div class="side-footer"><a class="metro-arrow-right"></a></div></div>';
+  $case_out = '<div class="container case_study_container">';
+  $i = 0;
+  foreach ($variables['case'] as $key => $value) {
+    $i = $i + 1;
+    if ($i <= 3) {
+      $tids = !empty($value -> field_industry_tid) ? 'id-' . $value -> field_industry_tid : '';
+      $tids .= !empty($value -> field_services_tid) ? '-' . $value -> field_services_tid : '';
+      $tids .= !empty($value -> field_challenges_tid) ? '-' . $value -> field_challenges_tid : '';
+      $tids .= !empty($value -> field_technologies_tid) ? '-' . $value -> field_technologies_tid : '';
+      $case_out .= '<div class="case ' . $tids . '"><div class="case-header"><h3>' . $value -> title . '</h3><div class="case-date">
+    <div class="case-date-day">' . date('d', $value -> created) . '</div>
+    <div class="case-date-month">' . date('M', $value -> created) . '</div>
+    <div class="case-date-year">' . date('y', $value -> created) . '</div></div></div>
+    <div class="row"><div class="case-image span2"><img src="' . file_create_url($value -> image) . '"/></div>
+    <div class="case-body span4">' . substr($value -> case_body,0,300) . '...</div></div>
+    <div class="case-footer">'.l(t('Read More'),'node/'.$value->nid).'</div></div>';
+    }
+  }
+  $case_out .= '</div>';
+  $output = '<div class="metro metro-responsive-tiles panorama"><div class="panorama-sections"><div class="panorama-section tile-span-4">' . $indus_out . $services_out . $challenge_out . $technology_out . '</div><a class="btn btn-primary button-filter" href="#done">Done</a></div></div>';
+  $output .= $indus_side . $services_side . $challenge_side . $technology_side . $case_out;
+  return $output;
+}
